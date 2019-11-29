@@ -1,0 +1,2 @@
+[mysql]
+192.168.1.179 ansible_user=mysqll ansible_ssh_pass=a

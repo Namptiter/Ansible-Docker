@@ -1,0 +1,50 @@
+---
+- hosts: all
+  become: true
+  
+  tasks:
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: ['apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common','python-pip']
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/{{ansible_distribution|lower}} {{ansible_distribution_release}} stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt: update_cache=yes name=docker-ce state=present
+      
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Pull Wordpress image
+      docker_image:
+        name: wordpress:latest
+        source: pull
+
+    - name: Create Wordpress container
+      docker_container:
+        name: wordpress_1
+        image: wordpress:latest
+        state: started
+        ports:
+          - "8080:80"
+          - "443:443"
+        env:
+          WORDPRESS_DB_HOST: "192.168.1.179:3306"
+          WORDPRESS_DB_USER: nam
+          WORDPRESS_DB_PASSWORD: namptit
+          WORDPRESS_DB_NAME: wordpress
+        volumes:
+          - wordpress:/var/www/html
+        restart: true
